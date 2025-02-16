@@ -4,20 +4,51 @@ using UnityEngine;
 public class GameManager : MonoBehaviour
 {
     [SerializeField] private float score = 0;
-    [SerializeField] private TextMeshProUGUI scoreText;
-    private FallTrigger[] pins;
+    [SerializeField] private BallController ball;
+    [SerializeField] private GameObject pinCollection;
 
+    [SerializeField] private Transform pinAnchor;
+    [SerializeField] private InputManager inputManager;
+    [SerializeField] private TextMeshProUGUI scoreText;
+    private FallTrigger[] fallTriggers;
+    private GameObject pinObjects;
 
     private void Start()
     {
-        // Correct the FindObjectsByType method call
-        pins = FindObjectsByType<FallTrigger>(FindObjectsSortMode.None);
+        inputManager.OnResetPressed.AddListener(HandleReset);
+        SetPins();
+    }
 
-        foreach (FallTrigger pin in pins)
+    private void HandleReset()
+    {
+        Debug.Log("Resetting ball and pins...");
+        ball.ResetBall();
+        SetPins();
+    }
+
+    private void SetPins()
+    {
+        if (pinObjects)
+        {
+            Debug.Log("Destroying existing pins...");
+            foreach (Transform child in pinObjects.transform)
+            {
+                Destroy(child.gameObject);
+            }
+
+            Destroy(pinObjects);
+        }
+
+        Debug.Log("Instantiating new pins...");
+        pinObjects = Instantiate(pinCollection, pinAnchor.transform.position, Quaternion.identity, transform);
+        fallTriggers = FindObjectsByType<FallTrigger>(FindObjectsInactive.Include, FindObjectsSortMode.None);
+
+        foreach (FallTrigger pin in fallTriggers)
         {
             pin.OnPinFall.AddListener(IncrementScore);
         }
     }
+
 
     private void IncrementScore()
     {
